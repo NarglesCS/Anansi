@@ -140,10 +140,14 @@ The store is in-memory — restart the server and you're back to the seed data.
 | --- | --- | --- |
 | `ANANSI_ALLOW_MUTATIONS` | off | Set to `1` to enable `graphql_mutate` |
 | `ANANSI_MAX_DEPTH` | `10` | Max query nesting depth (fragment-cycle safe) |
+| `ANANSI_MAX_COMPLEXITY` | `100` | Max total fields selected per request (breadth guard) |
+| `ANANSI_MAX_RESULT_BYTES` | `262144` | Max serialized result size; `0` disables |
 
 Other rails: `graphql_query` hard-rejects mutations, subscriptions are always
 rejected, and all errors come back as standard GraphQL `{message, locations, path}`
-shapes that models know how to read and repair.
+shapes that models know how to read and repair. Guard failures include a
+remediation hint so agents can self-correct. Repeated queries skip
+re-parsing/re-validation via an internal cache (execution is never cached).
 
 ## How it's built
 

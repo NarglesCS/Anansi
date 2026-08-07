@@ -5,7 +5,15 @@ from __future__ import annotations
 import pytest
 
 from anansi import data
-from anansi.engine import measure_depth, run_operation, validate_only
+from anansi.engine import (
+    default_max_complexity,
+    default_max_depth,
+    default_max_result_bytes,
+    measure_complexity,
+    measure_depth,
+    run_operation,
+    validate_only,
+)
 from anansi.schema import build_executable_schema
 
 SCHEMA = build_executable_schema()
@@ -60,9 +68,9 @@ def test_validation_catches_unknown_field():
     assert "nickname" in check["errors"][0]["message"]
 
 
-def test_validate_reports_depth():
+def test_validate_reports_depth_and_complexity():
     check = validate_only(SCHEMA, "{ users { posts { title } } }")
-    assert check == {"valid": True, "errors": [], "depth": 3}
+    assert check == {"valid": True, "errors": [], "depth": 3, "complexity": 3}
 
 
 def test_syntax_error_is_structured():
@@ -76,6 +84,89 @@ def test_depth_limit_blocks_deep_queries():
     result = run_operation(SCHEMA, deep, max_depth=3)
     assert result["data"] is None
     assert "depth" in result["errors"][0]["message"].lower()
+
+
+def test_complexity_limit_blocks_wide_queries():
+    result = run_operation(SCHEMA, "{ users { id name email role } }", max_complexity=3)
+    assert result["data"] is None
+    message = result["errors"][0]["message"]
+    assert "complexity" in message.lower()
+    assert "fewer fields" in message  # remediation hint for the model
+
+
+def test_complexity_within_limit_executes():
+    result = run_operation(SCHEMA, "{ users { id } }", max_complexity=3)
+    assert "errors" not in result
+    assert len(result["data"]["users"]) == 4
+
+
+def test_complexity_counts_fragment_fields():
+    from graphql import parse
+
+    doc = parse("query { users { ...F } } fragment F on User { id name }")
+    assert measure_complexity(doc) == 3  # users + id + name
+
+
+def test_complexity_fragment_cycles_terminate():
+    from graphql import parse
+
+    doc = parse(
+        """
+        query { users { ...A } }
+        fragment A on User { name ...B }
+        fragment B on User { email ...A }
+        """
+    )
+    assert measure_complexity(doc) == 3  # users + name + email, cycle skipped
+
+
+def test_result_size_cap_blocks_large_payloads():
+    result = run_operation(SCHEMA, "{ posts { title body } }", max_result_bytes=50)
+    assert result["data"] is None
+    message = result["errors"][0]["message"]
+    assert "bytes" in message
+    assert "limit arguments" in message  # remediation hint for the model
+
+
+def test_result_size_cap_zero_disables_check():
+    result = run_operation(SCHEMA, "{ posts { title body } }", max_result_bytes=0)
+    assert "errors" not in result
+    assert len(result["data"]["posts"]) == 6
+
+
+def test_env_limits_fall_back_on_garbage(monkeypatch):
+    monkeypatch.setenv("ANANSI_MAX_DEPTH", "banana")
+    monkeypatch.setenv("ANANSI_MAX_COMPLEXITY", "")
+    monkeypatch.setenv("ANANSI_MAX_RESULT_BYTES", "12.5")
+    assert default_max_depth() == 10
+    assert default_max_complexity() == 100
+    assert default_max_result_bytes() == 262_144
+
+
+def test_env_depth_limit_honored(monkeypatch):
+    monkeypatch.setenv("ANANSI_MAX_DEPTH", "2")
+    result = run_operation(SCHEMA, "{ users { posts { title } } }")
+    assert result["data"] is None
+    assert "depth" in result["errors"][0]["message"].lower()
+
+
+def test_repeated_queries_hit_cache_but_execution_stays_fresh():
+    from anansi.engine import _prepare
+
+    _prepare.cache_clear()
+    query = "{ posts(published: false) { id } }"
+
+    first = run_operation(SCHEMA, query)
+    assert _prepare.cache_info().misses == 1
+    assert {p["id"] for p in first["data"]["posts"]} == {"p2", "p6"}
+
+    run_operation(
+        SCHEMA, 'mutation { publishPost(id: "p2") { id } }', allow_mutations=True
+    )
+
+    second = run_operation(SCHEMA, query)
+    assert _prepare.cache_info().hits >= 1  # static analysis reused
+    assert {p["id"] for p in second["data"]["posts"]} == {"p6"}  # data not stale
 
 
 def test_fragment_cycles_do_not_hang_depth_measurement():

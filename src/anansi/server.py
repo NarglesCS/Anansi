@@ -50,8 +50,9 @@ def graphql_schema() -> str:
 def graphql_validate(query: str) -> dict[str, Any]:
     """Validate a GraphQL query without executing it.
 
-    Returns {"valid": bool, "errors": [...], "depth": int}. Use this to catch
-    typos and invalid fields cheaply before calling graphql_query.
+    Returns {"valid": bool, "errors": [...], "depth": int, "complexity": int}.
+    Use this to catch typos and invalid fields cheaply before calling
+    graphql_query. Depth and complexity must stay within the server limits.
     """
     return validate_only(SCHEMA, query)
 
