@@ -1,16 +1,20 @@
-# GraphMCP
+# Anansi
 
-**An MCP server that speaks GraphQL.** Instead of exposing one tool per endpoint,
-GraphMCP gives AI agents a single typed query surface: the agent reads the schema,
-then composes exactly the query it needs — nested relations in one call, only the
-fields it wants.
+[![CI](https://github.com/NarglesCS/anansi/actions/workflows/ci.yml/badge.svg)](https://github.com/NarglesCS/anansi/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/anansi)](https://pypi.org/project/anansi/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+**An MCP server that speaks GraphQL.** Named for the spider who owns all stories:
+instead of exposing one tool per endpoint, Anansi spins your backend into a single
+typed web. The agent reads the schema, then composes exactly the query it needs —
+nested relations in one call, only the fields it wants.
 
 Ships with a mock blog dataset (users → posts → comments) so you can try it the
 moment you clone it.
 
 ## Why
 
-| Concern | Tool-per-endpoint MCP server | GraphMCP |
+| Concern | Tool-per-endpoint MCP server | Anansi |
 | --- | --- | --- |
 | Tool count | Grows with the API (tool explosion) | 4 fixed tools |
 | Over-fetching | Full payloads → wasted tokens | Agent selects only needed fields |
@@ -20,11 +24,30 @@ moment you clone it.
 
 ## Quickstart
 
+### No clone needed (any MCP client)
+
+With [uv](https://docs.astral.sh/uv/) installed, add this to your MCP client
+config (Claude Desktop, VS Code, etc.):
+
+```json
+{
+  "mcpServers": {
+    "anansi": {
+      "command": "uvx",
+      "args": ["anansi"],
+      "env": { "ANANSI_ALLOW_MUTATIONS": "1" }
+    }
+  }
+}
+```
+
+### From source
+
 Requires Python 3.10+.
 
 ```sh
-git clone https://github.com/<you>/GraphMCP.git
-cd GraphMCP
+git clone https://github.com/NarglesCS/anansi.git
+cd anansi
 python -m venv .venv
 
 # Windows
@@ -41,7 +64,7 @@ python -m venv .venv
 ### Option 1 — MCP Inspector (fastest way to poke at the mock data)
 
 ```sh
-npx @modelcontextprotocol/inspector .venv/Scripts/python.exe -m graphmcp.server
+npx @modelcontextprotocol/inspector .venv/Scripts/python.exe -m anansi.server
 ```
 
 Opens a browser UI where you can list the tools, read the `graphql://schema`
@@ -50,7 +73,7 @@ resource, and run queries by hand.
 ### Option 2 — VS Code agent mode
 
 [.vscode/mcp.json](.vscode/mcp.json) is preconfigured. Open the repo in VS Code,
-start the `graphmcp` server from the MCP view, then ask Copilot agent mode things
+start the `anansi` server from the MCP view, then ask Copilot agent mode things
 like *"Who commented on Grace Hopper's posts?"* and watch it discover the schema
 and compose queries.
 
@@ -59,16 +82,16 @@ and compose queries.
 ```json
 {
   "mcpServers": {
-    "graphmcp": {
-      "command": "/absolute/path/to/GraphMCP/.venv/bin/python",
-      "args": ["-m", "graphmcp.server"],
-      "env": { "GRAPHMCP_ALLOW_MUTATIONS": "1" }
+    "anansi": {
+      "command": "/absolute/path/to/anansi/.venv/bin/python",
+      "args": ["-m", "anansi.server"],
+      "env": { "ANANSI_ALLOW_MUTATIONS": "1" }
     }
   }
 }
 ```
 
-(On Windows the command is `...\GraphMCP\.venv\Scripts\python.exe`.)
+(On Windows the command is `...\anansi\.venv\Scripts\python.exe`.)
 
 ## What the server exposes
 
@@ -78,7 +101,7 @@ and compose queries.
 | Tool | `graphql_schema()` | Same SDL for clients that prefer tools over resources |
 | Tool | `graphql_validate(query)` | Parse + validate + measure depth **without executing** |
 | Tool | `graphql_query(query, variables?)` | Read-only execution; mutations rejected |
-| Tool | `graphql_mutate(mutation, variables?)` | Writes, only when `GRAPHMCP_ALLOW_MUTATIONS=1` |
+| Tool | `graphql_mutate(mutation, variables?)` | Writes, only when `ANANSI_ALLOW_MUTATIONS=1` |
 
 ### Example: query the mock data
 
@@ -115,8 +138,8 @@ The store is in-memory — restart the server and you're back to the seed data.
 
 | Env var | Default | Effect |
 | --- | --- | --- |
-| `GRAPHMCP_ALLOW_MUTATIONS` | off | Set to `1` to enable `graphql_mutate` |
-| `GRAPHMCP_MAX_DEPTH` | `10` | Max query nesting depth (fragment-cycle safe) |
+| `ANANSI_ALLOW_MUTATIONS` | off | Set to `1` to enable `graphql_mutate` |
+| `ANANSI_MAX_DEPTH` | `10` | Max query nesting depth (fragment-cycle safe) |
 
 Other rails: `graphql_query` hard-rejects mutations, subscriptions are always
 rejected, and all errors come back as standard GraphQL `{message, locations, path}`
@@ -128,7 +151,7 @@ shapes that models know how to read and repair.
 flowchart LR
     Agent["AI agent (MCP client)"] -- "MCP stdio" --> Tools
 
-    subgraph GraphMCP["GraphMCP server"]
+    subgraph Anansi["Anansi server"]
         direction TB
         Tools["Tools: graphql_query / graphql_validate / graphql_mutate / graphql_schema"]
         Schema["Resource: graphql://schema (SDL)"]
@@ -142,10 +165,10 @@ flowchart LR
 
 Each layer is independently swappable:
 
-- [src/graphmcp/data.py](src/graphmcp/data.py) — in-memory mock dataset. Replace with any real backend.
-- [src/graphmcp/schema.py](src/graphmcp/schema.py) — SDL with doc strings (they travel to the model) + resolver wiring.
-- [src/graphmcp/engine.py](src/graphmcp/engine.py) — execution pipeline with safety rails; no MCP dependency.
-- [src/graphmcp/server.py](src/graphmcp/server.py) — thin MCP wiring: tools, resource, instructions.
+- [src/anansi/data.py](src/anansi/data.py) — in-memory mock dataset. Replace with any real backend.
+- [src/anansi/schema.py](src/anansi/schema.py) — SDL with doc strings (they travel to the model) + resolver wiring.
+- [src/anansi/engine.py](src/anansi/engine.py) — execution pipeline with safety rails; no MCP dependency.
+- [src/anansi/server.py](src/anansi/server.py) — thin MCP wiring: tools, resource, instructions.
 
 ## Roadmap ideas
 
@@ -154,5 +177,9 @@ Each layer is independently swappable:
 - Per-field auth, query cost analysis, timeouts, result-size caps.
 - Persisted-query allowlists for high-trust deployments.
 - GraphQL subscriptions mapped onto MCP notifications.
+
+## License
+
+[MIT](LICENSE)
 
 Contributions and issues welcome.

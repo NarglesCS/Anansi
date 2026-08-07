@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from graphmcp import data
-from graphmcp.engine import measure_depth, run_operation, validate_only
-from graphmcp.schema import build_executable_schema
+from anansi import data
+from anansi.engine import measure_depth, run_operation, validate_only
+from anansi.schema import build_executable_schema
 
 SCHEMA = build_executable_schema()
 

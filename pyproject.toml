@@ -3,23 +3,42 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "graphmcp"
+name = "anansi"
 version = "0.1.0"
-description = "Proof of concept: an MCP server that exposes a typed GraphQL query surface"
+description = "An MCP server that speaks GraphQL: one typed query surface for AI agents instead of a pile of tools"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Joshua Schwimmer", email = "jvschwimmer@gmail.com" }]
+keywords = ["mcp", "model-context-protocol", "graphql", "ai-agents", "llm", "tools", "anansi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+]
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=2.0",
     "graphql-core>=3.2,<4",
 ]
 
+[project.urls]
+Homepage = "https://github.com/NarglesCS/anansi"
+Issues = "https://github.com/NarglesCS/anansi/issues"
+
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 
 [project.scripts]
-graphmcp = "graphmcp.server:main"
+anansi = "anansi.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/graphmcp"]
+packages = ["src/anansi"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

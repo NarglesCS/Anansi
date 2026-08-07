@@ -25,11 +25,11 @@ Workflow:
 4. For writes, call graphql_mutate (only available when the host enables it).
 """
 
-mcp = MCPServer("graphmcp", instructions=INSTRUCTIONS)
+mcp = MCPServer("anansi", instructions=INSTRUCTIONS)
 
 
 def _mutations_enabled() -> bool:
-    return os.getenv("GRAPHMCP_ALLOW_MUTATIONS", "").strip().lower() in {
+    return os.getenv("ANANSI_ALLOW_MUTATIONS", "").strip().lower() in {
         "1", "true", "yes", "on",
     }
 
@@ -75,7 +75,7 @@ def graphql_query(query: str, variables: dict[str, Any] | None = None) -> dict[s
 def graphql_mutate(mutation: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
     """Execute a GraphQL mutation (write operation).
 
-    Only permitted when the server is started with GRAPHMCP_ALLOW_MUTATIONS=1.
+    Only permitted when the server is started with ANANSI_ALLOW_MUTATIONS=1.
     Example:
 
         mutation($input: CreatePostInput!) { createPost(input: $input) { id } }
@@ -85,7 +85,7 @@ def graphql_mutate(mutation: str, variables: dict[str, Any] | None = None) -> di
             "data": None,
             "errors": [{
                 "message": "Mutations are disabled. Start the server with "
-                           "GRAPHMCP_ALLOW_MUTATIONS=1 to enable writes."
+                           "ANANSI_ALLOW_MUTATIONS=1 to enable writes."
             }],
         }
     return run_operation(SCHEMA, mutation, variables, allow_mutations=True)

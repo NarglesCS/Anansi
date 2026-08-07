@@ -22,7 +22,7 @@ from graphql.language import (
 
 
 def default_max_depth() -> int:
-    return int(os.getenv("GRAPHMCP_MAX_DEPTH", "10"))
+    return int(os.getenv("ANANSI_MAX_DEPTH", "10"))
 
 
 def measure_depth(document: DocumentNode) -> int:
@@ -92,7 +92,7 @@ def run_operation(
         if op.operation is OperationType.MUTATION and not allow_mutations:
             return _error_payload(
                 "Mutations are not allowed through graphql_query. "
-                "Use the graphql_mutate tool (requires GRAPHMCP_ALLOW_MUTATIONS=1)."
+                "Use the graphql_mutate tool (requires ANANSI_ALLOW_MUTATIONS=1)."
             )
 
     validation_errors = validate(schema, document)
