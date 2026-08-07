@@ -1,7 +1,7 @@
 # Anansi
 
 [![CI](https://github.com/NarglesCS/anansi/actions/workflows/ci.yml/badge.svg)](https://github.com/NarglesCS/anansi/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/anansi)](https://pypi.org/project/anansi/)
+[![PyPI](https://img.shields.io/pypi/v/anansi-mcp)](https://pypi.org/project/anansi-mcp/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **An MCP server that speaks GraphQL.** Named for the spider who owns all stories:
@@ -34,7 +34,7 @@ config (Claude Desktop, VS Code, etc.):
   "mcpServers": {
     "anansi": {
       "command": "uvx",
-      "args": ["anansi"],
+      "args": ["anansi-mcp"],
       "env": { "ANANSI_ALLOW_MUTATIONS": "1" }
     }
   }
