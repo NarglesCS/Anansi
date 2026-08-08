@@ -70,18 +70,6 @@ npx @modelcontextprotocol/inspector .venv/Scripts/python.exe -m anansi.server
 Opens a browser UI where you can list the tools, read the `graphql://schema`
 resource, and run queries by hand.
 
-### Option 1.5 ? Browser UI
-
-A simple web UI lives in [`ui/`](ui/README.md). It uses a lightweight Flask proxy that reuses the same schema and execution engine, then serves a React app for writing queries, mutations, variables, and browsing the schema.
-
-```sh
-python -m pip install -e .
-python ui/proxy.py
-cd ui && npm install && npm run dev
-```
-
-By default the UI talks to `http://127.0.0.1:8000/graphql`.
-
 ### Option 2 — VS Code agent mode
 
 [.vscode/mcp.json](.vscode/mcp.json) is preconfigured. Open the repo in VS Code,
