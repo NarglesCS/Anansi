@@ -5,4 +5,3 @@ __pycache__/
 dist/
 PRIVATE_NOTES.txt
 notes/
-node_modules/
